@@ -4,6 +4,7 @@ import com.rufus.store.dtos.ChangePasswordRequest;
 import com.rufus.store.dtos.RegisterUserRequest;
 import com.rufus.store.dtos.UpdateUserRequest;
 import com.rufus.store.dtos.UserDto;
+import com.rufus.store.entities.Role;
 import com.rufus.store.mappers.UserMapper;
 import com.rufus.store.repositories.UserRepository;
 import jakarta.validation.Valid;
@@ -61,6 +62,7 @@ public class UserController {
 
         var user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole(Role.USER);
         userRepository.save(user);
 
         var userDto = userMapper.toDto(user);
