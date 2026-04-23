@@ -18,6 +18,10 @@ spring:
     accessTokenExpiration: 300 # 5m
     refreshTokenExpiration: 604800 # 7d
 
+stripe:
+  secretKey: ${STRIPE_SECRET_KEY}
+  webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
+websiteUrl: http://localhost:4242
 
 logging:
   level:
