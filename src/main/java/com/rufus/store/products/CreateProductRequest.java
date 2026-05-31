@@ -9,5 +9,9 @@ public class CreateProductRequest {
     private String description;
     private BigDecimal price;
     private Byte categoryId;
+    private Long restaurantId;
+    private String imageUrl;
+    private Boolean isVeg;
+    private Boolean isAvailable = true;
 
 }

@@ -32,4 +32,15 @@ public class OrderService {
 
         return orderMapper.toDto(order);
     }
+
+    public OrderDto updateDeliveryStatus(Long orderId, DeliveryStatus deliveryStatus) {
+        var order = orderRepository
+                .findById(orderId)
+                .orElseThrow(OrderNotFoundException::new);
+
+        order.setDeliveryStatus(deliveryStatus);
+        orderRepository.save(order);
+
+        return orderMapper.toDto(order);
+    }
 }

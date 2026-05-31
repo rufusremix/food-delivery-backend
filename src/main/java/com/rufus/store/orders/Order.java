@@ -1,6 +1,7 @@
 package com.rufus.store.orders;
 
 import com.rufus.store.carts.Cart;
+import com.rufus.store.users.Address;
 import com.rufus.store.users.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -29,6 +30,14 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
+    @Column(name = "delivery_status")
+    @Enumerated(EnumType.STRING)
+    private DeliveryStatus deliveryStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_address_id")
+    private Address deliveryAddress;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -42,6 +51,7 @@ public class Order {
         var order = new Order();
         order.setCustomer(customer);
         order.setStatus(PaymentStatus.PENDING);
+        order.setDeliveryStatus(DeliveryStatus.CONFIRMED);
         order.setTotalPrice(cart.getTotalPrice());
 
         cart.getItems().forEach(item -> {

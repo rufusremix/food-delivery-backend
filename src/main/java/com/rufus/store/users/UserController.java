@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -61,6 +62,24 @@ public class UserController {
             @PathVariable Long id,
             @RequestBody ChangePasswordRequest request) {
         userService.changePassword(id, request);
+    }
+
+    @GetMapping("/{id}/addresses")
+    public List<AddressDto> getAddresses(@PathVariable Long id) {
+        return userService.getAddresses(id);
+    }
+
+    @PostMapping("/{id}/addresses")
+    public ResponseEntity<AddressDto> addAddress(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateAddressRequest request,
+            UriComponentsBuilder uriBuilder) {
+
+        var addressDto = userService.addAddress(id, request);
+        var uri = uriBuilder.path("/users/{userId}/addresses/{addressId}")
+                .buildAndExpand(id, addressDto.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(addressDto);
     }
 
     @ExceptionHandler(DuplicateUserException.class)

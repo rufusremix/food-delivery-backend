@@ -7,7 +7,9 @@ import com.rufus.store.carts.CartRepository;
 import com.rufus.store.orders.OrderRepository;
 import com.rufus.store.auth.AuthService;
 import com.rufus.store.carts.CartService;
+import com.rufus.store.users.AddressRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ public class CheckoutService {
     private final AuthService authService;
     private final CartService cartService;
     private final PaymentGateway paymentGateway;
+    private final AddressRepository addressRepository;
 
     @Transactional
     public CheckoutResponse checkout(CheckoutRequest request) {
@@ -31,7 +34,16 @@ public class CheckoutService {
             throw new CartEmptyException();
         }
 
-        var order = Order.fromCart(cart, authService.getCurrentUser());
+        var currentUser = authService.getCurrentUser();
+
+        var deliveryAddress = addressRepository.findById(request.getAddressId())
+                .orElseThrow(() -> new AccessDeniedException("Invalid delivery address."));
+        if (!deliveryAddress.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Invalid delivery address.");
+        }
+
+        var order = Order.fromCart(cart, currentUser);
+        order.setDeliveryAddress(deliveryAddress);
 
         orderRepository.save(order);
 

@@ -2,6 +2,7 @@ package com.rufus.store.orders;
 
 
 import com.rufus.store.common.ErrorDto;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,13 @@ public class OrderController {
     @GetMapping("/{orderId}")
     public OrderDto getOrder(@PathVariable("orderId") Long orderId) {
         return orderService.getOrder(orderId);
+    }
+
+    @PatchMapping("/{orderId}/status")
+    public OrderDto updateDeliveryStatus(
+            @PathVariable("orderId") Long orderId,
+            @Valid @RequestBody UpdateDeliveryStatusRequest request) {
+        return orderService.updateDeliveryStatus(orderId, request.getDeliveryStatus());
     }
 
     @ExceptionHandler(OrderNotFoundException.class)

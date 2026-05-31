@@ -1,6 +1,5 @@
-package com.rufus.store.products;
+package com.rufus.store.restaurants;
 
-import com.rufus.store.restaurants.Restaurant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,8 +11,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "products")
-public class Product {
+@Table(name = "restaurants")
+public class Restaurant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -25,30 +24,28 @@ public class Product {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "price")
-    private BigDecimal price;
+    @Column(name = "cuisine")
+    private String cuisine;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "category_id")
-    private Category category;
-
-    @ManyToOne
-    @JoinColumn(name = "restaurant_id")
-    private Restaurant restaurant;
+    @Column(name = "address")
+    private String address;
 
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "is_available")
-    private Boolean isAvailable;
+    @Column(name = "is_open")
+    private Boolean isOpen;
 
-    @Column(name = "is_veg")
-    private Boolean isVeg;
+    @Column(name = "delivery_fee")
+    private BigDecimal deliveryFee;
 
     @PrePersist
     void applyDefaults() {
-        if (isAvailable == null) {
-            isAvailable = true;
+        if (isOpen == null) {
+            isOpen = true;
+        }
+        if (deliveryFee == null) {
+            deliveryFee = BigDecimal.ZERO;
         }
     }
 
@@ -57,7 +54,6 @@ public class Product {
         return getClass().getSimpleName() + "(" +
                 "id = " + id + ", " +
                 "name = " + name + ", " +
-                "description = " + description  +
-                "category = " + category + ")";
+                "cuisine = " + cuisine + ")";
     }
 }

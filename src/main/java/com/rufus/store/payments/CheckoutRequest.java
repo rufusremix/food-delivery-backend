@@ -10,4 +10,7 @@ import java.util.UUID;
 public class CheckoutRequest {
     @NotNull(message = "Cart ID is required.")
     private UUID cartId;
+
+    @NotNull(message = "Delivery address ID is required.")
+    private Long addressId;
 }

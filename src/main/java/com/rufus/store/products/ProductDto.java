@@ -10,4 +10,8 @@ public class ProductDto {
     private String description;
     private BigDecimal price;
     private Byte categoryId;
+    private Long restaurantId;
+    private String imageUrl;
+    private Boolean isAvailable;
+    private Boolean isVeg;
 }

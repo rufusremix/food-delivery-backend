@@ -1,5 +1,6 @@
 package com.rufus.store.products;
 
+import com.rufus.store.restaurants.RestaurantRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ public class ProductController {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final CategoryRepository categoryRepository;
+    private final RestaurantRepository restaurantRepository;
 
     @GetMapping
     public List<ProductDto> getProducts(@RequestParam(name = "categoryId", required = false) Byte categoryId) {
@@ -45,6 +47,11 @@ public class ProductController {
         var category = categoryRepository.findById(request.getCategoryId()).orElseThrow();
         var product = productMapper.toEntity(request);
         product.setCategory(category);
+
+        if (request.getRestaurantId() != null) {
+            var restaurant = restaurantRepository.findById(request.getRestaurantId()).orElseThrow();
+            product.setRestaurant(restaurant);
+        }
 
         productRepository.save(product);
 
