@@ -1,6 +1,7 @@
 package com.rufus.store.carts;
 
 import com.rufus.store.products.Product;
+import com.rufus.store.users.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +28,11 @@ public class Cart {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.MERGE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<CartItem> items = new LinkedHashSet<>();
 
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     public BigDecimal getTotalPrice() {
         return items.stream()
                 .map(CartItem::getTotalPrice)
@@ -38,6 +44,14 @@ public class Cart {
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public boolean isFromSameRestaurant(Product product) {
+        return items.stream()
+                .findFirst()
+                .map(item -> item.getProduct().getRestaurant().getId()
+                        .equals(product.getRestaurant().getId()))
+                .orElse(true);   // empty cart accepts any restaurant
     }
 
     public CartItem addItem(Product product) {

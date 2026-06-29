@@ -6,65 +6,47 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/carts")
+@RequestMapping("/cart")
 @AllArgsConstructor
 public class CartController {
     private final CartService cartService;
 
-    @PostMapping
-    public ResponseEntity<CartDto> createCart(UriComponentsBuilder uriBuilder) {
-        var cartDto = cartService.createCart();
-
-        var uri = uriBuilder.path("/carts/{id}").buildAndExpand(cartDto.getId()).toUri();
-        return ResponseEntity.created(uri).body(cartDto);
-
+    @GetMapping
+    public CartDto getCart() {
+        return cartService.getCart();
     }
 
-    @GetMapping("/{id}")
-    public CartDto getCart(@PathVariable("id") UUID cartId) {
-        return cartService.getCart(cartId);
-    }
-
-    @PostMapping("/{id}/items")
+    @PostMapping("/items")
     public ResponseEntity<CartItemDto> addToCart(
-            @PathVariable("id") UUID cartId,
-            @Valid @RequestBody AddItemToCartRequest request) {
-        var cartItemDto = cartService.addToCart(cartId, request.getProductId());
+            @Valid @RequestBody AddItemToCartRequest request,
+            @RequestParam(defaultValue = "false") boolean replace) {
+        var cartItemDto = cartService.addToCart(request.getProductId(), replace);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(cartItemDto);
     }
 
-    @PutMapping("/{cartId}/items/{productId}")
+    @PutMapping("/items/{productId}")
     public CartItemDto updateItem(
-            @PathVariable("cartId") UUID cartId,
             @PathVariable("productId") Long productId,
             @Valid @RequestBody UpdateCartItemRequest request
     ) {
-
-        return cartService.updateItem(cartId, productId, request.getQuantity());
+        return cartService.updateItem(productId, request.getQuantity());
     }
 
-
-    @DeleteMapping("/{cartId}/items/{productId}")
-    public ResponseEntity<?> removeItem(
-            @PathVariable("cartId") UUID cartId,
-            @PathVariable("productId") Long productId
-    ) {
-        cartService.removeItem(cartId, productId);
+    @DeleteMapping("/items/{productId}")
+    public ResponseEntity<?> removeItem(@PathVariable("productId") Long productId) {
+        cartService.removeItem(productId);
 
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{cartId}/items")
-    public ResponseEntity<Void> clearCart(@PathVariable UUID cartId) {
-
-        cartService.clearCart(cartId);
+    @DeleteMapping("/items")
+    public ResponseEntity<Void> clearCart() {
+        cartService.clearCart();
 
         return ResponseEntity.noContent().build();
     }
@@ -78,4 +60,12 @@ public class CartController {
     public ResponseEntity<Map<String, String>> handleProductNotFound() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Product not found."));
     }
+
+    @ExceptionHandler(CartRestaurantConflictException.class)
+    public ResponseEntity<Map<String, String>> handleRestaurantConflict() {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error",
+                        "Your cart has items from a different restaurant. Clear the cart to add this item."));
+    }
+
 }

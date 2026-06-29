@@ -1,11 +1,10 @@
 package com.rufus.store.carts;
 
+import com.rufus.store.auth.AuthService;
 import com.rufus.store.products.ProductNotFoundException;
 import com.rufus.store.products.ProductRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -13,46 +12,38 @@ public class CartService {
     private CartRepository cartRepository;
     private CartMapper cartMapper;
     private ProductRepository productRepository;
+    private final AuthService authService;
 
-    public CartDto createCart() {
-        var cart = new Cart();
+    public CartItemDto addToCart(Long productId, boolean replace) {
+        var user = authService.getCurrentUser();
+        var cart = cartRepository.findByUserId(user.getId()).orElseGet(() -> {
+            var newCart = new Cart();
+            newCart.setUser(user);
+            return cartRepository.save(newCart);
+        });
+
+        var product = productRepository.findById(productId)
+                .orElseThrow(ProductNotFoundException::new);
+
+        if (!cart.isFromSameRestaurant(product)) {
+            if (!replace) {
+                throw new CartRestaurantConflictException();
+            }
+            cart.clear();
+        }
+
+        var addedItem = cart.addItem(product);
         cartRepository.save(cart);
 
-        return cartMapper.toDto(cart);
+        return cartMapper.toDto(addedItem);
     }
 
-    public CartItemDto addToCart(UUID cartId, Long productId) {
-        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
-        if (cart == null) {
-            throw new CartNotFoundException();
-        }
-
-        var product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            throw new ProductNotFoundException();
-        }
-
-        var cartItem = cart.addItem(product);
-
-        cartRepository.save(cart);
-
-        return cartMapper.toDto(cartItem);
+    public CartDto getCart() {
+        return cartMapper.toDto(getCurrentUserCart());
     }
 
-    public CartDto getCart(UUID cartId) {
-        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
-        if (cart == null) {
-            throw new CartNotFoundException();
-        }
-
-        return cartMapper.toDto(cart);
-    }
-
-    public CartItemDto updateItem(UUID cartId, Long productId, Integer quantity) {
-        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
-        if (cart == null) {
-            throw new CartNotFoundException();
-        }
+    public CartItemDto updateItem(Long productId, Integer quantity) {
+        var cart = getCurrentUserCart();
 
         var cartItem = cart.getItem(productId);
         if (cartItem == null) {
@@ -65,25 +56,25 @@ public class CartService {
         return cartMapper.toDto(cartItem);
     }
 
-    public void removeItem(UUID cartId, Long productId) {
-        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
-        if (cart == null) {
-            throw new CartNotFoundException();
-        }
+    public void removeItem(Long productId) {
+        var cart = getCurrentUserCart();
 
         cart.removeItem(productId);
 
         cartRepository.save(cart);
     }
 
-    public void clearCart(UUID cartId) {
-        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
-        if (cart == null) {
-            throw new CartNotFoundException();
-        }
+    public void clearCart() {
+        var cart = getCurrentUserCart();
 
         cart.clear();
 
         cartRepository.save(cart);
+    }
+
+    private Cart getCurrentUserCart() {
+        var user = authService.getCurrentUser();
+        return cartRepository.findByUserId(user.getId())
+                .orElseThrow(CartNotFoundException::new);
     }
 }

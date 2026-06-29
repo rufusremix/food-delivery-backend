@@ -6,7 +6,6 @@ import com.rufus.store.carts.CartNotFoundException;
 import com.rufus.store.carts.CartRepository;
 import com.rufus.store.orders.OrderRepository;
 import com.rufus.store.auth.AuthService;
-import com.rufus.store.carts.CartService;
 import com.rufus.store.users.AddressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,22 +18,19 @@ public class CheckoutService {
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final AuthService authService;
-    private final CartService cartService;
     private final PaymentGateway paymentGateway;
     private final AddressRepository addressRepository;
 
     @Transactional
     public CheckoutResponse checkout(CheckoutRequest request) {
-        var cart = cartRepository.getCartWithItems(request.getCartId()).orElse(null);
-        if (cart == null) {
-            throw new CartNotFoundException();
-        }
+        var currentUser = authService.getCurrentUser();
+
+        var cart = cartRepository.findByUserId(currentUser.getId())
+                .orElseThrow(CartNotFoundException::new);
 
         if (cart.isEmpty()) {
             throw new CartEmptyException();
         }
-
-        var currentUser = authService.getCurrentUser();
 
         var deliveryAddress = addressRepository.findById(request.getAddressId())
                 .orElseThrow(() -> new AccessDeniedException("Invalid delivery address."));
@@ -50,7 +46,8 @@ public class CheckoutService {
         try {
             var session = paymentGateway.createCheckoutSession(order);
 
-            cartService.clearCart(cart.getId());
+            cart.clear();
+            cartRepository.save(cart);
 
             return new CheckoutResponse(order.getId(), session.getCheckoutUrl());
         }
