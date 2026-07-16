@@ -1,5 +1,6 @@
 package com.rufus.store.products;
 
+import com.rufus.store.common.ErrorDto;
 import com.rufus.store.restaurants.RestaurantRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,17 +19,29 @@ public class ProductController {
     private final RestaurantRepository restaurantRepository;
 
     @GetMapping
-    public List<ProductDto> getProducts(@RequestParam(name = "categoryId", required = false) Byte categoryId) {
-        if(categoryId != null) {
-            return productRepository.findByCategoryId(categoryId)
-                    .stream()
-                    .map(productMapper::toDto)
-                    .toList();
+    public ResponseEntity<?> getProducts(
+            @RequestParam(name = "categoryId", required = false) Byte categoryId,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "isVeg", required = false) String isVeg) {
+        
+        Boolean isVegValue = null;
+        if (isVeg != null && !isVeg.isBlank()) {
+            if (isVeg.equalsIgnoreCase("true")) 
+                isVegValue = true;
+             else if (isVeg.equalsIgnoreCase("false")) 
+                isVegValue = false;
+             else 
+                return ResponseEntity.badRequest()
+                        .body(new ErrorDto("Invalid value for 'isVeg'. Expected 'true' or 'false', got: '" + isVeg + "'"));
+            
         }
-        return productRepository.findAll()
+        
+        List<ProductDto> products = productRepository.findByFilters(categoryId, search, isVegValue)
                 .stream()
                 .map(productMapper::toDto)
                 .toList();
+        
+        return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")

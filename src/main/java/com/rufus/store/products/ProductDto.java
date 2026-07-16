@@ -9,8 +9,8 @@ public class ProductDto {
     private String name;
     private String description;
     private BigDecimal price;
-    private Byte categoryId;
-    private Long restaurantId;
+    private ProductCategoryDto category;
+    private ProductRestaurantDto restaurant;
     private String imageUrl;
     private Boolean isAvailable;
     private Boolean isVeg;

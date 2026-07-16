@@ -21,9 +21,16 @@ public class RestaurantController {
     private final ProductMapper productMapper;
 
     @GetMapping
-    public List<RestaurantDto> getRestaurants() {
-        return restaurantRepository.findAll()
-                .stream()
+    public List<RestaurantDto> getRestaurants(
+            @RequestParam(name = "search", required = false) String search) {
+        List<Restaurant> restaurants;
+        
+        if (search != null && !search.isBlank())
+            restaurants = restaurantRepository.findBySearchTerm(search);
+         else
+            restaurants = restaurantRepository.findAll();
+        
+        return restaurants.stream()
                 .map(restaurantMapper::toDto)
                 .toList();
     }
