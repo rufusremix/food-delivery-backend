@@ -51,7 +51,7 @@ public class Order {
         var order = new Order();
         order.setCustomer(customer);
         order.setStatus(PaymentStatus.PENDING);
-        order.setDeliveryStatus(DeliveryStatus.CONFIRMED);
+        order.setDeliveryStatus(null);
         order.setTotalPrice(cart.getTotalPrice());
 
         cart.getItems().forEach(item -> {

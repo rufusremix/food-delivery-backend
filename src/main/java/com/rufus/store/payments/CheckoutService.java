@@ -1,10 +1,12 @@
 package com.rufus.store.payments;
 
+import com.rufus.store.orders.DeliveryStatus;
 import com.rufus.store.orders.Order;
 import com.rufus.store.carts.CartEmptyException;
 import com.rufus.store.carts.CartNotFoundException;
 import com.rufus.store.carts.CartRepository;
 import com.rufus.store.orders.OrderRepository;
+import com.rufus.store.orders.PaymentStatus;
 import com.rufus.store.auth.AuthService;
 import com.rufus.store.users.AddressRepository;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +65,10 @@ public class CheckoutService {
                 .ifPresent(paymentResult -> {
                     var order = orderRepository.findById(paymentResult.getOrderId()).orElseThrow();
                     order.setStatus(paymentResult.getPaymentStatus());
+                    
+                    if (paymentResult.getPaymentStatus() == PaymentStatus.PAID)
+                        order.setDeliveryStatus(DeliveryStatus.CONFIRMED);
+                    
                     orderRepository.save(order);
                 });
     }
