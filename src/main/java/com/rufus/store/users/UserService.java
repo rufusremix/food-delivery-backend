@@ -27,7 +27,7 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
-    public UserDto registerUser(RegisterUserRequest request) {
+    public User registerUser(RegisterUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateUserException();
         }
@@ -37,7 +37,7 @@ public class UserService {
         user.setRole(Role.USER);
         userRepository.save(user);
 
-        return userMapper.toDto(user);
+        return user;
     }
 
     public UserDto updateUser(Long userId, UpdateUserRequest request) {

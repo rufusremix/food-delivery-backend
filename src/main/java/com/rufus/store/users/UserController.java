@@ -1,5 +1,10 @@
 package com.rufus.store.users;
 
+import com.rufus.store.auth.JwtConfig;
+import com.rufus.store.auth.JwtResponse;
+import com.rufus.store.auth.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +25,8 @@ public class UserController {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final JwtService jwtService;
+    private final JwtConfig jwtConfig;
 
     @GetMapping
     public Iterable<UserDto> getAllUsers(
@@ -34,15 +41,23 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<?> registerUser(
+    public ResponseEntity<JwtResponse> registerUser(
             @Valid @RequestBody RegisterUserRequest request,
-            UriComponentsBuilder uriBuilder) {
+            HttpServletResponse response) {
 
-        var userDto = userService.registerUser(request);
-        ;
-        var uri = uriBuilder.path("/users/{id}").buildAndExpand(userDto.getId()).toUri();
+        var user = userService.registerUser(request);
 
-        return ResponseEntity.created(uri).body(userDto);
+        var accessToken = jwtService.generateAccessToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
+
+        var cookie = new Cookie("refreshToken", refreshToken.toString());
+        cookie.setHttpOnly(true);
+        cookie.setPath("/auth/refresh");
+        cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration());
+        cookie.setSecure(true);
+        response.addCookie(cookie);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new JwtResponse(accessToken.toString()));
     }
 
     @PutMapping("/{id}")
