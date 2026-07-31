@@ -1,10 +1,19 @@
 package com.rufus.store.payments;
 
-import lombok.NoArgsConstructor;
+import com.rufus.store.common.BaseApiException;
+import org.springframework.http.HttpStatus;
 
-@NoArgsConstructor
-public class PaymentException extends RuntimeException {
+public class PaymentException extends BaseApiException {
+    public PaymentException() {
+        this("Payment processing failed.");
+    }
+
     public PaymentException(String message) {
-        super(message);
+        super(
+                message,
+                HttpStatus.BAD_GATEWAY,
+                "/errors/payment-failed",
+                "Payment Failed"
+        );
     }
 }

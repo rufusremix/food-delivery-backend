@@ -2,7 +2,6 @@ package com.rufus.store.orders;
 
 import com.rufus.store.auth.AuthService;
 import lombok.AllArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,7 +26,7 @@ public class OrderService {
 
         var user = authService.getCurrentUser();
         if (!order.isPlacedBy(user)) {
-            throw new AccessDeniedException("You don't have access to this order.");
+            throw new OrderAccessDeniedException();
         }
 
         return orderMapper.toDto(order);

@@ -1,11 +1,14 @@
 package com.rufus.store.products;
 
-import com.rufus.store.common.ErrorDto;
 import com.rufus.store.restaurants.RestaurantRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.time.Instant;
 
 import java.util.List;
 
@@ -30,9 +33,16 @@ public class ProductController {
                 isVegValue = true;
              else if (isVeg.equalsIgnoreCase("false")) 
                 isVegValue = false;
-             else 
-                return ResponseEntity.badRequest()
-                        .body(new ErrorDto("Invalid value for 'isVeg'. Expected 'true' or 'false', got: '" + isVeg + "'"));
+             else {
+                ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid value for 'isVeg'. Expected 'true' or 'false', got: '" + isVeg + "'"
+                );
+                problem.setType(URI.create("/errors/invalid-parameter"));
+                problem.setTitle("Invalid Parameter");
+                problem.setProperty("parameter", "isVeg");
+                return ResponseEntity.badRequest().body(problem);
+             }
             
         }
         

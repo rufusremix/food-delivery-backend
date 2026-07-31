@@ -36,27 +36,22 @@ public class RestaurantController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RestaurantDto> getRestaurant(@PathVariable Long id) {
-        var restaurant = restaurantRepository.findById(id).orElse(null);
-
-        if (restaurant != null)
-            return ResponseEntity.ok().body(restaurantMapper.toDto(restaurant));
-        else
-            return ResponseEntity.notFound().build();
+    public RestaurantDto getRestaurant(@PathVariable Long id) {
+        return restaurantMapper.toDto(
+                restaurantRepository.findById(id).orElseThrow(RestaurantNotFoundException::new)
+        );
     }
 
     @GetMapping("/{id}/menu")
-    public ResponseEntity<List<ProductDto>> getRestaurantMenu(@PathVariable Long id) {
+    public List<ProductDto> getRestaurantMenu(@PathVariable Long id) {
         if (!restaurantRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+            throw new RestaurantNotFoundException();
         }
 
-        var menu = productRepository.findByRestaurantId(id)
+        return productRepository.findByRestaurantId(id)
                 .stream()
                 .map(productMapper::toDto)
                 .toList();
-
-        return ResponseEntity.ok(menu);
     }
 
     @PostMapping

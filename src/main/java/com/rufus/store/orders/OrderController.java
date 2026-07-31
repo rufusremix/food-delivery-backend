@@ -1,12 +1,7 @@
 package com.rufus.store.orders;
 
-
-import com.rufus.store.common.ErrorDto;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,17 +27,5 @@ public class OrderController {
             @PathVariable("orderId") Long orderId,
             @Valid @RequestBody UpdateDeliveryStatusRequest request) {
         return orderService.updateDeliveryStatus(orderId, request.getDeliveryStatus());
-    }
-
-    @ExceptionHandler(OrderNotFoundException.class)
-    public ResponseEntity<Void> handleOrderNotFound() {
-        return ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorDto> handleAccessDenied(Exception ex) {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(new ErrorDto(ex.getMessage()));
     }
 }

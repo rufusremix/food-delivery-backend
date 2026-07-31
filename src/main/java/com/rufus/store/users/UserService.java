@@ -2,7 +2,6 @@ package com.rufus.store.users;
 
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -87,7 +86,7 @@ public class UserService {
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-            throw new AccessDeniedException("Password does not match");
+            throw new InvalidPasswordException();
         }
 
         user.setPassword(request.getNewPassword());

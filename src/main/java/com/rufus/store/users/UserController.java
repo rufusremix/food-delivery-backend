@@ -9,13 +9,11 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @AllArgsConstructor
@@ -95,22 +93,5 @@ public class UserController {
                 .buildAndExpand(id, addressDto.getId()).toUri();
 
         return ResponseEntity.created(uri).body(addressDto);
-    }
-
-    @ExceptionHandler(DuplicateUserException.class)
-    public ResponseEntity<Map<String, String>> handleDuplicateUser() {
-        return ResponseEntity.badRequest().body(
-                Map.of("email", "Email is already registered.")
-        );
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Void> handleUserNotFound() {
-        return ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Void> handleAccessDenied() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }
