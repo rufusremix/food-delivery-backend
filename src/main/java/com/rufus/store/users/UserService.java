@@ -1,12 +1,12 @@
 package com.rufus.store.users;
 
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Set;
 
 @AllArgsConstructor
 @Service
@@ -16,9 +16,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AddressRepository addressRepository;
 
-    public Iterable<UserDto> getAllUsers(String sortBy) {
-        if (!Set.of("name", "email").contains(sortBy)) sortBy = "name";
-        return userRepository.findAll(Sort.by(sortBy)).stream().map(userMapper::toDto).toList();
+    public Page<UserDto> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(userMapper::toDto);
     }
 
     public UserDto getUser(Long userId) {

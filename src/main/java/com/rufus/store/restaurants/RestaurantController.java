@@ -1,10 +1,16 @@
 package com.rufus.store.restaurants;
 
+import com.rufus.store.common.ApiResponse;
+import com.rufus.store.common.PaginationInfo;
+import com.rufus.store.common.ResponseMeta;
 import com.rufus.store.products.ProductDto;
 import com.rufus.store.products.ProductMapper;
 import com.rufus.store.products.ProductRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,45 +27,73 @@ public class RestaurantController {
     private final ProductMapper productMapper;
 
     @GetMapping
-    public List<RestaurantDto> getRestaurants(
-            @RequestParam(name = "search", required = false) String search) {
-        List<Restaurant> restaurants;
-        
-        if (search != null && !search.isBlank())
-            restaurants = restaurantRepository.findBySearchTerm(search);
-         else
-            restaurants = restaurantRepository.findAll();
-        
-        return restaurants.stream()
-                .map(restaurantMapper::toDto)
-                .toList();
+    public ResponseEntity<ApiResponse<List<RestaurantDto>>> getRestaurants(
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<Restaurant> restaurantPage = (search != null && !search.isBlank())
+                ? restaurantRepository.findBySearchTerm(search, pageable)
+                : restaurantRepository.findAll(pageable);
+
+        List<RestaurantDto> restaurants = restaurantPage.getContent()
+                .stream().map(restaurantMapper::toDto).toList();
+
+        ResponseMeta meta = ResponseMeta.builder()
+                .pagination(PaginationInfo.builder()
+                        .currentPage(page)
+                        .pageSize(size)
+                        .totalItems(restaurantPage.getTotalElements())
+                        .totalPages(restaurantPage.getTotalPages())
+                        .build())
+                .build();
+
+        return ResponseEntity.ok(new ApiResponse<>(restaurants, meta));
     }
 
     @GetMapping("/{id}")
-    public RestaurantDto getRestaurant(@PathVariable Long id) {
-        return restaurantMapper.toDto(
-                restaurantRepository.findById(id).orElseThrow(RestaurantNotFoundException::new)
-        );
+    public ResponseEntity<ApiResponse<RestaurantDto>> getRestaurant(@PathVariable Long id) {
+        var restaurant = restaurantRepository.findById(id)
+                .orElseThrow(RestaurantNotFoundException::new);
+        return ResponseEntity.ok(new ApiResponse<>(restaurantMapper.toDto(restaurant)));
     }
 
     @GetMapping("/{id}/menu")
-    public List<ProductDto> getRestaurantMenu(@PathVariable Long id) {
-        if (!restaurantRepository.existsById(id)) {
-            throw new RestaurantNotFoundException();
-        }
+    public ResponseEntity<ApiResponse<List<ProductDto>>> getRestaurantMenu(
+            @PathVariable Long id,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
 
-        return productRepository.findByRestaurantId(id)
-                .stream()
-                .map(productMapper::toDto)
-                .toList();
+        if (!restaurantRepository.existsById(id))
+            throw new RestaurantNotFoundException();
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ProductDto> productPage = productRepository.findByRestaurantId(id, pageable)
+                .map(productMapper::toDto);
+
+        ResponseMeta meta = ResponseMeta.builder()
+                .pagination(PaginationInfo.builder()
+                        .currentPage(page)
+                        .pageSize(size)
+                        .totalItems(productPage.getTotalElements())
+                        .totalPages(productPage.getTotalPages())
+                        .build())
+                .build();
+
+        return ResponseEntity.ok(new ApiResponse<>(productPage.getContent(), meta));
     }
 
     @PostMapping
-    public ResponseEntity<RestaurantDto> createRestaurant(@Valid @RequestBody CreateRestaurantRequest request) {
-        var restaurant = restaurantMapper.toEntity(request);
+    public ResponseEntity<ApiResponse<RestaurantDto>> createRestaurant(
+            @Valid @RequestBody CreateRestaurantRequest request) {
 
+        var restaurant = restaurantMapper.toEntity(request);
         restaurantRepository.save(restaurant);
 
-        return new ResponseEntity<>(restaurantMapper.toDto(restaurant), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(restaurantMapper.toDto(restaurant)));
     }
 }
+

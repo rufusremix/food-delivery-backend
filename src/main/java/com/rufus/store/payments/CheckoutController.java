@@ -1,8 +1,10 @@
 package com.rufus.store.payments;
 
+import com.rufus.store.common.ApiResponse;
 import com.rufus.store.orders.OrderRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -15,8 +17,9 @@ public class CheckoutController {
     private final OrderRepository orderRepository;
 
     @PostMapping
-    public CheckoutResponse checkout(@Valid @RequestBody CheckoutRequest request) {
-        return checkoutService.checkout(request);
+    public ResponseEntity<ApiResponse<CheckoutResponse>> checkout(
+            @Valid @RequestBody CheckoutRequest request) {
+        return ResponseEntity.ok(new ApiResponse<>(checkoutService.checkout(request)));
     }
 
     @PostMapping("/webhook")

@@ -3,10 +3,16 @@ package com.rufus.store.users;
 import com.rufus.store.auth.JwtConfig;
 import com.rufus.store.auth.JwtResponse;
 import com.rufus.store.auth.JwtService;
+import com.rufus.store.common.ApiResponse;
+import com.rufus.store.common.PaginationInfo;
+import com.rufus.store.common.ResponseMeta;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @AllArgsConstructor
@@ -27,19 +34,36 @@ public class UserController {
     private final JwtConfig jwtConfig;
 
     @GetMapping
-    public Iterable<UserDto> getAllUsers(
-            @RequestParam(required = false, defaultValue = "", name = "sort") String sortBy
-    ) {
-        return userService.getAllUsers(sortBy);
+    public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers(
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sort", defaultValue = "name") String sortBy) {
+
+        if (!Set.of("name", "email").contains(sortBy)) sortBy = "name";
+
+        Page<UserDto> userPage = userService.getAllUsers(
+                PageRequest.of(page - 1, size, Sort.by(sortBy))
+        );
+
+        ResponseMeta meta = ResponseMeta.builder()
+                .pagination(PaginationInfo.builder()
+                        .currentPage(page)
+                        .pageSize(size)
+                        .totalItems(userPage.getTotalElements())
+                        .totalPages(userPage.getTotalPages())
+                        .build())
+                .build();
+
+        return ResponseEntity.ok(new ApiResponse<>(userPage.getContent(), meta));
     }
 
     @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable Long id) {
-        return userService.getUser(id);
+    public ResponseEntity<ApiResponse<UserDto>> getUser(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(userService.getUser(id)));
     }
 
     @PostMapping
-    public ResponseEntity<JwtResponse> registerUser(
+    public ResponseEntity<ApiResponse<JwtResponse>> registerUser(
             @Valid @RequestBody RegisterUserRequest request,
             HttpServletResponse response) {
 
@@ -55,36 +79,39 @@ public class UserController {
         cookie.setSecure(true);
         response.addCookie(cookie);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new JwtResponse(accessToken.toString()));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(new JwtResponse(accessToken.toString())));
     }
 
     @PutMapping("/{id}")
-    public UserDto updateUser(
-            @PathVariable(name = "id") Long id,
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(
+            @PathVariable("id") Long id,
             @RequestBody UpdateUserRequest request) {
-        return userService.updateUser(id, request);
+        return ResponseEntity.ok(new ApiResponse<>(userService.updateUser(id, request)));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change-password")
-    public void changePassword(
-            @PathVariable Long id,
+    public ResponseEntity<Void> changePassword(
+            @PathVariable("id") Long id,
             @RequestBody ChangePasswordRequest request) {
         userService.changePassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/addresses")
-    public List<AddressDto> getAddresses(@PathVariable Long id) {
-        return userService.getAddresses(id);
+    public ResponseEntity<ApiResponse<List<AddressDto>>> getAddresses(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(userService.getAddresses(id)));
     }
 
     @PostMapping("/{id}/addresses")
-    public ResponseEntity<AddressDto> addAddress(
-            @PathVariable Long id,
+    public ResponseEntity<ApiResponse<AddressDto>> addAddress(
+            @PathVariable("id") Long id,
             @Valid @RequestBody CreateAddressRequest request,
             UriComponentsBuilder uriBuilder) {
 
@@ -92,6 +119,6 @@ public class UserController {
         var uri = uriBuilder.path("/users/{userId}/addresses/{addressId}")
                 .buildAndExpand(id, addressDto.getId()).toUri();
 
-        return ResponseEntity.created(uri).body(addressDto);
+        return ResponseEntity.created(uri).body(new ApiResponse<>(addressDto));
     }
 }

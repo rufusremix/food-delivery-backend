@@ -1,10 +1,12 @@
 package com.rufus.store.auth;
 
+import com.rufus.store.common.ApiResponse;
 import com.rufus.store.users.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,10 +21,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public JwtResponse login(
+    public ResponseEntity<ApiResponse<JwtResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse response) {
-
 
         var loginResult = authService.login(request);
 
@@ -34,13 +35,15 @@ public class AuthController {
         cookie.setSecure(true);
         response.addCookie(cookie);
 
-        return new JwtResponse(loginResult.getAccessToken().toString());
-
+        return ResponseEntity.ok(new ApiResponse<>(
+                new JwtResponse(loginResult.getAccessToken().toString())
+        ));
     }
 
     @PostMapping("/refresh")
-    public JwtResponse refresh(@CookieValue(value = "refreshToken") String refreshToken) {
+    public ResponseEntity<ApiResponse<JwtResponse>> refresh(
+            @CookieValue(value = "refreshToken") String refreshToken) {
         var accessToken = authService.refreshAccessToken(refreshToken);
-        return new JwtResponse(accessToken.toString());
+        return ResponseEntity.ok(new ApiResponse<>(new JwtResponse(accessToken.toString())));
     }
 }

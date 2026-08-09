@@ -1,5 +1,7 @@
 package com.rufus.store.products;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,18 +14,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByCategoryId(Byte categoryId);
 
     @EntityGraph(attributePaths = {"category", "restaurant"})
-    List<Product> findByRestaurantId(Long restaurantId);
+    Page<Product> findByRestaurantId(Long restaurantId, Pageable pageable);
 
     @EntityGraph(attributePaths = "category")
     @Query("SELECT p FROM Product p")
     List<Product> findAllWithCategory();
 
     @EntityGraph(attributePaths = {"category", "restaurant"})
-    @Query("SELECT p FROM Product p WHERE " +
+    @Query(value = "SELECT p FROM Product p WHERE " +
+           "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
+           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:isVeg IS NULL OR p.isVeg = :isVeg)",
+           countQuery = "SELECT COUNT(p) FROM Product p WHERE " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
            "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
            "(:isVeg IS NULL OR p.isVeg = :isVeg)")
-    List<Product> findByFilters(@Param("categoryId") Byte categoryId,
+    Page<Product> findByFilters(@Param("categoryId") Byte categoryId,
                                 @Param("search") String search,
-                                @Param("isVeg") Boolean isVeg);
+                                @Param("isVeg") Boolean isVeg,
+                                Pageable pageable);
 }

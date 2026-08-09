@@ -2,9 +2,9 @@ package com.rufus.store.orders;
 
 import com.rufus.store.auth.AuthService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Service
@@ -13,10 +13,10 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
 
-    public List<OrderDto> getAllOrders() {
+    public Page<OrderDto> getAllOrders(Pageable pageable) {
         var user = authService.getCurrentUser();
-        var orders = orderRepository.getOrdersByCustomer(user);
-        return orders.stream().map(orderMapper::toDto).toList();
+        return orderRepository.getOrdersByCustomer(user, pageable)
+                .map(orderMapper::toDto);
     }
 
     public OrderDto getOrder(Long orderId) {
