@@ -40,6 +40,25 @@ public class AuthController {
         ));
     }
 
+    @PostMapping("/signin")
+    public ResponseEntity<ApiResponse<JwtResponse>> signIn(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response) {
+
+        var result = authService.signIn(request);
+
+        var cookie = new Cookie("refreshToken", result.getRefreshToken().toString());
+        cookie.setHttpOnly(true);
+        cookie.setPath("/auth/refresh");
+        cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration());
+        cookie.setSecure(true);
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(new ApiResponse<>(
+                new JwtResponse(result.getAccessToken().toString())
+        ));
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<JwtResponse>> refresh(
             @CookieValue(value = "refreshToken") String refreshToken) {
