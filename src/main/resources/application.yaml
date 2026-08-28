@@ -23,6 +23,10 @@ stripe:
   webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
 websiteUrl: http://localhost:4242
 
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+
 logging:
   level:
     org.flywaydb: INFO
