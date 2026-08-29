@@ -72,6 +72,10 @@ public class AuthService {
     }
 
     public Jwt refreshAccessToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new InvalidRefreshTokenException();
+        }
+
         var jwt = jwtService.parseToken(refreshToken);
         if (jwt == null || jwt.isExpired()) {
             throw new InvalidRefreshTokenException();

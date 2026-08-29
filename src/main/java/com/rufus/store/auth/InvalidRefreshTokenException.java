@@ -9,7 +9,7 @@ public class InvalidRefreshTokenException extends BaseApiException {
                 "Invalid or expired refresh token.",
                 HttpStatus.UNAUTHORIZED,
                 "/errors/invalid-refresh-token",
-                "Invalid Refresh Token"
+                "Unauthorized"
         );
     }
 }
