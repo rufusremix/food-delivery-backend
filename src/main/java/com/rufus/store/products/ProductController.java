@@ -9,11 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 
@@ -30,30 +28,13 @@ public class ProductController {
     public ResponseEntity<?> getProducts(
             @RequestParam(name = "categoryId", required = false) Byte categoryId,
             @RequestParam(name = "search", required = false) String search,
-            @RequestParam(name = "isVeg", required = false) String isVeg,
+            @RequestParam(name = "isVeg", required = false) Boolean isVeg,
+            @RequestParam(name = "isAvailable", required = false) Boolean isAvailable,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "20") int size) {
 
-        Boolean isVegValue = null;
-        if (isVeg != null && !isVeg.isBlank()) {
-            if (isVeg.equalsIgnoreCase("true"))
-                isVegValue = true;
-            else if (isVeg.equalsIgnoreCase("false"))
-                isVegValue = false;
-            else {
-                ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid value for 'isVeg'. Expected 'true' or 'false', got: '" + isVeg + "'"
-                );
-                problem.setType(URI.create("/errors/invalid-parameter"));
-                problem.setTitle("Invalid Parameter");
-                problem.setProperty("parameter", "isVeg");
-                return ResponseEntity.badRequest().body(problem);
-            }
-        }
-
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<Product> productPage = productRepository.findByFilters(categoryId, search, isVegValue, pageable);
+        Page<Product> productPage = productRepository.findByFilters(categoryId, search, isVeg, isAvailable, pageable);
         List<ProductDto> products = productPage.getContent()
                 .stream().map(productMapper::toDto).toList();
 

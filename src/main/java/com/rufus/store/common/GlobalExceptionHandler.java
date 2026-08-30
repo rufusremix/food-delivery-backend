@@ -9,6 +9,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.net.URI;
 import java.util.List;
@@ -111,6 +112,37 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(problem);
     }
 
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ProblemDetail> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+
+        String name = ex.getName();
+        Object value = ex.getValue();
+        String expectedType = ex.getRequiredType() != null
+                ? ex.getRequiredType().getSimpleName()
+                : "the expected type";
+
+        boolean isPathVariable = ex.getParameter().getParameterAnnotation(PathVariable.class) != null;
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Invalid value for '" + name + "'. Expected " + expectedType + ", got: '" + value + "'"
+        );
+
+        if (isPathVariable) {
+            problem.setType(URI.create("/errors/invalid-path-variable"));
+            problem.setTitle("Invalid Path Variable");
+        } else {
+            problem.setType(URI.create("/errors/invalid-parameter"));
+            problem.setTitle("Invalid Parameter");
+        }
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("parameter", name);
+
+        return ResponseEntity.badRequest().body(problem);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleGenericException(

@@ -24,13 +24,20 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query(value = "SELECT p FROM Product p WHERE " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
            "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-           "(:isVeg IS NULL OR p.isVeg = :isVeg)",
+           "(:isVeg IS NULL OR p.isVeg = :isVeg) AND " +
+           "(:isAvailable IS NULL OR " +
+           "  (:isAvailable = false AND p.isAvailable = false) OR " +
+           "  (:isAvailable = true AND p.isAvailable = true AND p.restaurant.isOpen = true))",
            countQuery = "SELECT COUNT(p) FROM Product p WHERE " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
            "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-           "(:isVeg IS NULL OR p.isVeg = :isVeg)")
+           "(:isVeg IS NULL OR p.isVeg = :isVeg) AND " +
+           "(:isAvailable IS NULL OR " +
+           "  (:isAvailable = false AND p.isAvailable = false) OR " +
+           "  (:isAvailable = true AND p.isAvailable = true AND p.restaurant.isOpen = true))")
     Page<Product> findByFilters(@Param("categoryId") Byte categoryId,
                                 @Param("search") String search,
                                 @Param("isVeg") Boolean isVeg,
+                                @Param("isAvailable") Boolean isAvailable,
                                 Pageable pageable);
 }

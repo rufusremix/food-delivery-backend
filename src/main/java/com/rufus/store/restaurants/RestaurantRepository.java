@@ -11,12 +11,18 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     @Query(
         value = "SELECT DISTINCT r FROM Restaurant r " +
                 "LEFT JOIN Product p ON p.restaurant.id = r.id " +
-                "WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                "OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))",
+                "WHERE (:search IS NULL OR " +
+                "       LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                "       OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                "AND (:isOpen IS NULL OR r.isOpen = :isOpen)",
         countQuery = "SELECT COUNT(DISTINCT r) FROM Restaurant r " +
                      "LEFT JOIN Product p ON p.restaurant.id = r.id " +
-                     "WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                     "OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))"
+                     "WHERE (:search IS NULL OR " +
+                     "       LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                     "       OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                     "AND (:isOpen IS NULL OR r.isOpen = :isOpen)"
     )
-    Page<Restaurant> findBySearchTerm(@Param("search") String search, Pageable pageable);
+    Page<Restaurant> findByFilters(@Param("search") String search,
+                                   @Param("isOpen") Boolean isOpen,
+                                   Pageable pageable);
 }

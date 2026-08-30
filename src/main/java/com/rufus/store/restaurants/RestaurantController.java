@@ -29,14 +29,13 @@ public class RestaurantController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<RestaurantDto>>> getRestaurants(
             @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "isOpen", required = false) Boolean isOpen,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Restaurant> restaurantPage = (search != null && !search.isBlank())
-                ? restaurantRepository.findBySearchTerm(search, pageable)
-                : restaurantRepository.findAll(pageable);
+        Page<Restaurant> restaurantPage = restaurantRepository.findByFilters(search, isOpen, pageable);
 
         List<RestaurantDto> restaurants = restaurantPage.getContent()
                 .stream().map(restaurantMapper::toDto).toList();
