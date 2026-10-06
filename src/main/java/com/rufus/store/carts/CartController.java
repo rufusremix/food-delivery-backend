@@ -22,7 +22,7 @@ public class CartController {
     public ResponseEntity<ApiResponse<CartItemDto>> addToCart(
             @Valid @RequestBody AddItemToCartRequest request,
             @RequestParam(defaultValue = "false") boolean replace) {
-        var cartItemDto = cartService.addToCart(request.getProductId(), replace);
+        var cartItemDto = cartService.addToCart(request.getProductId(), request.getQuantity(), replace);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(cartItemDto));
     }
 

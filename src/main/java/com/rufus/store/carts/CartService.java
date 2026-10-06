@@ -14,7 +14,7 @@ public class CartService {
     private ProductRepository productRepository;
     private final AuthService authService;
 
-    public CartItemDto addToCart(Long productId, boolean replace) {
+    public CartItemDto addToCart(Long productId, int quantity, boolean replace) {
         var user = authService.getCurrentUser();
         var cart = cartRepository.findByUserId(user.getId()).orElseGet(() -> {
             var newCart = new Cart();
@@ -32,7 +32,7 @@ public class CartService {
             cart.clear();
         }
 
-        var addedItem = cart.addItem(product);
+        var addedItem = cart.addItem(product, quantity);
         cartRepository.save(cart);
 
         return cartMapper.toDto(addedItem);

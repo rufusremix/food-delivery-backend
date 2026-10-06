@@ -55,13 +55,17 @@ public class Cart {
     }
 
     public CartItem addItem(Product product) {
+        return addItem(product, 1);
+    }
+
+    public CartItem addItem(Product product, int quantity) {
         var cartItem = getItem(product.getId());
         if (cartItem != null) {
-            cartItem.setQuantity(cartItem.getQuantity() + 1);
+            cartItem.setQuantity(cartItem.getQuantity() + quantity);
         } else {
             cartItem = new CartItem();
             cartItem.setProduct(product);
-            cartItem.setQuantity(1);
+            cartItem.setQuantity(quantity);
             cartItem.setCart(this);
             items.add(cartItem);
         }
