@@ -19,8 +19,8 @@ import java.util.Optional;
 
 @Service
 public class StripePaymentGateway implements PaymentGateway {
-    @Value("${websiteUrl}")
-    private String websiteUrl;
+    @Value("${stripe.redirectBaseUrl}")
+    private String redirectBaseUrl;
 
     @Value("${stripe.webhookSecretKey}")
     private String webhookSecretKey;
@@ -30,8 +30,8 @@ public class StripePaymentGateway implements PaymentGateway {
         try {
             var builder = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
-                    .setSuccessUrl(websiteUrl + "/checkout-success?orderId=" + order.getId())
-                    .setCancelUrl(websiteUrl + "/checkout-cancel")
+                    .setSuccessUrl(redirectBaseUrl + "/checkout-success?orderId=" + order.getId())
+                    .setCancelUrl(redirectBaseUrl + "/checkout-cancel")
                     .setPaymentIntentData(createPaymentIntent(order));
 
             order.getItems().forEach(item -> {

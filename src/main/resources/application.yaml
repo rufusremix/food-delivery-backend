@@ -1,17 +1,15 @@
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/spring_store?createDatabaseIfNotExist=true
-    username: root
-    password: password
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
+spring:
   flyway:
     enabled: true
 
-  jpa:
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   jwt:
     secret: ${JWT_SECRET}
@@ -19,14 +17,6 @@ spring:
     refreshTokenExpiration: 604800 # 7d
 
 stripe:
+  redirectBaseUrl: ${STRIPE_REDIRECT_BASE_URL}
   secretKey: ${STRIPE_SECRET_KEY}
   webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
-websiteUrl: http://localhost:4242
-
-app:
-  cors:
-    allowed-origins: http://localhost:5173
-
-logging:
-  level:
-    org.flywaydb: INFO
