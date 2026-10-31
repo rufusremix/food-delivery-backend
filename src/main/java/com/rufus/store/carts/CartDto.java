@@ -12,4 +12,7 @@ public class CartDto {
     private UUID id;
     private List<CartItemDto> items = new ArrayList<>();
     private BigDecimal totalPrice = BigDecimal.ZERO;
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
+    private BigDecimal grandTotal = BigDecimal.ZERO;
+    private CartRestaurantDto restaurant;
 }

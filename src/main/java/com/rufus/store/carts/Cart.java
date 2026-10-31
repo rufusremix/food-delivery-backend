@@ -1,6 +1,7 @@
 package com.rufus.store.carts;
 
 import com.rufus.store.products.Product;
+import com.rufus.store.restaurants.Restaurant;
 import com.rufus.store.users.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -37,6 +38,24 @@ public class Cart {
         return items.stream()
                 .map(CartItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getDeliveryFee() {
+        return items.stream()
+                .findFirst()
+                .map(item -> item.getProduct().getRestaurant().getDeliveryFee())
+                .orElse(BigDecimal.ZERO);
+    }
+
+    public Restaurant getRestaurant() {
+        return items.stream()
+                .findFirst()
+                .map(item -> item.getProduct().getRestaurant())
+                .orElse(null);
+    }
+
+    public BigDecimal getGrandTotal() {
+        return getTotalPrice().add(getDeliveryFee());
     }
 
     public CartItem getItem(Long productId) {

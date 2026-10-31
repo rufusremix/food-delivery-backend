@@ -16,6 +16,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @EntityGraph(attributePaths = {"category", "restaurant"})
     Page<Product> findByRestaurantId(Long restaurantId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "restaurant"})
+    @Query(value = "SELECT p FROM Product p WHERE p.restaurant.id = :restaurantId AND " +
+           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))",
+           countQuery = "SELECT COUNT(p) FROM Product p WHERE p.restaurant.id = :restaurantId AND " +
+           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Product> findByRestaurantIdAndFilters(@Param("restaurantId") Long restaurantId,
+                                               @Param("search") String search,
+                                               Pageable pageable);
+
     @EntityGraph(attributePaths = "category")
     @Query("SELECT p FROM Product p")
     List<Product> findAllWithCategory();

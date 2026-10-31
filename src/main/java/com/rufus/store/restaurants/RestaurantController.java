@@ -62,6 +62,7 @@ public class RestaurantController {
     @GetMapping("/{id}/menu")
     public ResponseEntity<ApiResponse<List<ProductDto>>> getRestaurantMenu(
             @PathVariable Long id,
+            @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "20") int size) {
 
@@ -69,7 +70,7 @@ public class RestaurantController {
             throw new RestaurantNotFoundException();
 
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<ProductDto> productPage = productRepository.findByRestaurantId(id, pageable)
+        Page<ProductDto> productPage = productRepository.findByRestaurantIdAndFilters(id, search, pageable)
                 .map(productMapper::toDto);
 
         ResponseMeta meta = ResponseMeta.builder()
