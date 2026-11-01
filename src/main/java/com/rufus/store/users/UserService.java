@@ -1,8 +1,10 @@
 package com.rufus.store.users;
 
+import com.rufus.store.auth.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +17,21 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final AddressRepository addressRepository;
+    private final AuthService authService;
+
 
     public Page<UserDto> getAllUsers(Pageable pageable) {
+        var currentUser = authService.getCurrentUser();
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("You do not have access to this resource");
+        }
+
         return userRepository.findAll(pageable).map(userMapper::toDto);
     }
 
     public UserDto getUser(Long userId) {
+        checkSelfOrAdmin(userId);
+
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         return userMapper.toDto(user);
     }
@@ -39,6 +50,8 @@ public class UserService {
     }
 
     public UserDto updateUser(Long userId, UpdateUserRequest request) {
+        checkSelfOrAdmin(userId);
+
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         userMapper.update(request, user);
         userRepository.save(user);
@@ -47,16 +60,22 @@ public class UserService {
     }
 
     public void deleteUser(Long userId) {
+        checkSelfOrAdmin(userId);
+
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         userRepository.delete(user);
     }
 
     public List<AddressDto> getAddresses(Long userId) {
+        checkSelfOrAdmin(userId);
+
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         return user.getAddresses().stream().map(this::toAddressDto).toList();
     }
 
     public AddressDto addAddress(Long userId, CreateAddressRequest request) {
+        checkSelfOrAdmin(userId);
+
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         var address = new Address();
@@ -82,6 +101,8 @@ public class UserService {
     }
 
     public void changePassword(Long userId, ChangePasswordRequest request) {
+        checkSelfOrAdmin(userId);
+
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
@@ -92,5 +113,10 @@ public class UserService {
         userRepository.save(user);
     }
 
-
+    private void checkSelfOrAdmin(Long userId) {
+        var currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId) && currentUser.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("You do not have access to this resource");
+        }
+    }
 }

@@ -65,4 +65,16 @@ public class AuthController {
         var accessToken = authService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(new ApiResponse<>(new JwtResponse(accessToken.toString())));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        var cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/auth/refresh");
+        cookie.setMaxAge(0);
+        cookie.setSecure(true);
+        response.addCookie(cookie);
+
+        return ResponseEntity.noContent().build();
+    }
 }

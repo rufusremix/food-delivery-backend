@@ -13,6 +13,7 @@ public class AuthSecurityRules implements SecurityRules {
         registry
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/signin").permitAll();
+                .requestMatchers(HttpMethod.POST, "/auth/signin").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll();
     }
 }
